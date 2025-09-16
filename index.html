@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Cipher Encryptor/Decryptor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-in-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 flex justify-center items-center min-h-screen p-4">
+
+    <div class="w-full max-w-2xl bg-slate-800 rounded-3xl shadow-2xl p-8 sm:p-12 space-y-8 border border-slate-700">
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-center text-emerald-400 leading-tight">
+            <span class="inline-block animate-pulse">🔐</span> <br>Multi-Cipher Encryptor & Decryptor
+        </h1>
+        <p class="text-center text-slate-400 max-w-md mx-auto text-lg">
+            A versatile tool for encrypting and decrypting text using various algorithms.
+        </p>
+        <div class="p-4 bg-yellow-900/50 text-yellow-300 rounded-xl text-sm border border-yellow-800">
+            <strong>⚠️ Important Note:</strong> AES is a modern, secure algorithm. The other ciphers are for educational or historical purposes and should not be used for sensitive data.
+        </div>
+
+        <div>
+            <label for="cipher-select" class="block text-base font-medium text-slate-300 mb-2">Select Cipher:</label>
+            <select id="cipher-select" class="w-full p-4 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200">
+                <option value="aes">AES Cipher</option>
+                <option value="caesar">Caesar Cipher</option>
+                <option value="vigenere">Vigenère Cipher</option>
+                <option value="railfence">Rail Fence Cipher</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="text-input" class="block text-base font-medium text-slate-300 mb-2">Text:</label>
+            <textarea id="text-input" rows="6" class="w-full p-4 rounded-xl bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200 resize-none" placeholder="Enter text to encrypt or decrypt..."></textarea>
+        </div>
+
+        <div>
+            <label id="key-label" for="key-input" class="block text-base font-medium text-slate-300 mb-2">Secret Key:</label>
+            <div class="relative">
+                <input type="password" id="key-input" class="w-full p-4 pr-10 rounded-xl bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200" placeholder="Enter a strong secret key...">
+                <input type="number" id="numeric-key-input" class="w-full p-4 rounded-xl bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200 hidden" placeholder="Enter a number...">
+                <button id="toggle-key-visibility" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.575 3.01 9.963 7.822.17.614-.047 1.258-.876 1.439a1.272 1.272 0 01-1.439-.876c-.17-.614-.047-1.258.876-1.439-1.252-4.512-4.632-6.522-8.214-6.522-3.582 0-6.962 2.01-8.214 6.522a1.012 1.012 0 010 .639zM12 9a3 3 0 100 6 3 3 0 000-6z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            <button id="encrypt-btn" class="w-full sm:w-1/2 p-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]">
+                Encrypt
+            </button>
+            <button id="decrypt-btn" class="w-full sm:w-1/2 p-4 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]">
+                Decrypt
+            </button>
+        </div>
+
+        <div>
+            <label for="result-output" class="block text-base font-medium text-slate-300 mb-2">Result:</label>
+            <div class="relative">
+                <textarea id="result-output" rows="6" readonly class="w-full p-4 rounded-xl bg-slate-700 border border-slate-600 text-white placeholder-slate-400 resize-none cursor-not-allowed transition-all duration-200" placeholder="Encrypted or decrypted text will appear here."></textarea>
+                <button id="copy-btn" class="absolute bottom-3 right-3 p-2 px-3 bg-slate-600 rounded-full text-white text-xs font-medium opacity-0 transition-opacity duration-300 focus:opacity-100 hover:opacity-100">
+                    Copy
+                </button>
+            </div>
+        </div>
+
+        <div id="status-message" class="p-4 text-center rounded-xl font-medium hidden animate-fade-in"></div>
+
+        <p class="text-center text-xs text-slate-500 mt-6">
+            Losing your key means you cannot recover your data. Keep it safe!
+        </p>
+    </div>
+
+    <script>
+        // DOM Elements
+        const cipherSelect = document.getElementById('cipher-select');
+        const textInput = document.getElementById('text-input');
+        const keyLabel = document.getElementById('key-label');
+        const keyInput = document.getElementById('key-input');
+        const numericKeyInput = document.getElementById('numeric-key-input');
+        const toggleKeyVisibilityBtn = document.getElementById('toggle-key-visibility');
+        const encryptBtn = document.getElementById('encrypt-btn');
+        const decryptBtn = document.getElementById('decrypt-btn');
+        const resultOutput = document.getElementById('result-output');
+        const copyBtn = document.getElementById('copy-btn');
+        const statusMessage = document.getElementById('status-message');
+
+        let statusTimeout;
+
+        // --- Utility Functions ---
+
+        const showStatus = (message, type) => {
+            clearTimeout(statusTimeout);
+            statusMessage.textContent = message;
+            statusMessage.className = `p-4 text-center rounded-xl font-medium animate-fade-in`;
+            if (type === 'error') {
+                statusMessage.classList.add('bg-red-500', 'text-white');
+            } else if (type === 'success') {
+                statusMessage.classList.add('bg-green-500', 'text-white');
+            } else {
+                statusMessage.classList.add('bg-blue-500', 'text-white');
+            }
+            statusTimeout = setTimeout(() => {
+                statusMessage.classList.add('hidden');
+            }, 5000);
+        };
+
+        const copyToClipboard = () => {
+            resultOutput.select();
+            resultOutput.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                showStatus('Copied to clipboard!', 'info');
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                showStatus('Failed to copy text.', 'error');
+            }
+        };
+
+        const toggleKeyVisibility = () => {
+            const currentInput = keyInput.classList.contains('hidden') ? numericKeyInput : keyInput;
+            const newType = currentInput.type === 'password' ? 'text' : 'password';
+            currentInput.type = newType;
+            toggleKeyVisibilityBtn.querySelector('svg').classList.toggle('text-emerald-400');
+        };
+
+        // --- Cipher Logic ---
+
+        const normalizeText = (text) => text.toUpperCase().replace(/[^A-Z]/g, '');
+
+        const caesarEncrypt = (text, shift) => {
+            let result = '';
+            for (let i = 0; i < text.length; i++) {
+                const charCode = text.charCodeAt(i);
+                if (charCode >= 65 && charCode <= 90) { // A-Z
+                    result += String.fromCharCode(((charCode - 65 + shift) % 26) + 65);
+                } else {
+                    result += text[i];
+                }
+            }
+            return result;
+        };
+
+        const caesarDecrypt = (text, shift) => {
+            let result = '';
+            for (let i = 0; i < text.length; i++) {
+                const charCode = text.charCodeAt(i);
+                if (charCode >= 65 && charCode <= 90) { // A-Z
+                    result += String.fromCharCode(((charCode - 65 - shift + 26) % 26) + 65);
+                } else {
+                    result += text[i];
+                }
+            }
+            return result;
+        };
+
+        const vigenereEncrypt = (text, key) => {
+            const normalizedText = normalizeText(text);
+            const normalizedKey = normalizeText(key);
+            if (!normalizedKey) return text;
+            let result = '';
+            let keyIndex = 0;
+            for (let i = 0; i < normalizedText.length; i++) {
+                const charCode = normalizedText.charCodeAt(i);
+                if (charCode >= 65 && charCode <= 90) {
+                    const shift = normalizedKey.charCodeAt(keyIndex % normalizedKey.length) - 65;
+                    result += String.fromCharCode(((charCode - 65 + shift) % 26) + 65);
+                    keyIndex++;
+                } else {
+                    result += normalizedText[i];
+                }
+            }
+            return result;
+        };
+
+        const vigenereDecrypt = (text, key) => {
+            const normalizedText = normalizeText(text);
+            const normalizedKey = normalizeText(key);
+            if (!normalizedKey) return text;
+            let result = '';
+            let keyIndex = 0;
+            for (let i = 0; i < normalizedText.length; i++) {
+                const charCode = normalizedText.charCodeAt(i);
+                if (charCode >= 65 && charCode <= 90) {
+                    const shift = normalizedKey.charCodeAt(keyIndex % normalizedKey.length) - 65;
+                    result += String.fromCharCode(((charCode - 65 - shift + 26) % 26) + 65);
+                    keyIndex++;
+                } else {
+                    result += normalizedText[i];
+                }
+            }
+            return result;
+        };
+        
+        const railFenceEncrypt = (text, rails) => {
+            if (rails <= 1) return text;
+            const fence = Array(rails).fill(null).map(() => []);
+            let rail = 0;
+            let direction = 1; // 1 for down, -1 for up
+            for (let i = 0; i < text.length; i++) {
+                fence[rail].push(text[i]);
+                if (rail === 0) direction = 1;
+                else if (rail === rails - 1) direction = -1;
+                rail += direction;
+            }
+            return fence.map(r => r.join('')).join('');
+        };
+
+        const railFenceDecrypt = (text, rails) => {
+            if (rails <= 1) return text;
+            const textLen = text.length;
+            const fence = Array(rails).fill(null).map(() => []);
+            const decrypted = Array(textLen).fill('');
+
+            let rail = 0;
+            let direction = 1;
+            for (let i = 0; i < textLen; i++) {
+                fence[rail].push(i);
+                if (rail === 0) direction = 1;
+                else if (rail === rails - 1) direction = -1;
+                rail += direction;
+            }
+            
+            let charIndex = 0;
+            for (let i = 0; i < rails; i++) {
+                for (let j = 0; j < fence[i].length; j++) {
+                    decrypted[fence[i][j]] = text[charIndex++];
+                }
+            }
+            return decrypted.join('');
+        };
+
+        // --- Event Handlers ---
+
+        const handleEncrypt = () => {
+            const cipherType = cipherSelect.value;
+            const text = textInput.value.trim();
+            let key = '';
+            
+            if (cipherType === 'aes' || cipherType === 'vigenere') {
+                key = keyInput.value.trim();
+            } else if (cipherType === 'caesar' || cipherType === 'railfence') {
+                key = parseInt(numericKeyInput.value, 10);
+            }
+
+            if (!text || (isNaN(key) && key === '')) {
+                showStatus('Please enter both text and a key.', 'error');
+                return;
+            }
+            
+            try {
+                let encryptedText;
+                if (cipherType === 'aes') {
+                    encryptedText = CryptoJS.AES.encrypt(text, key).toString();
+                } else if (cipherType === 'caesar') {
+                    encryptedText = caesarEncrypt(text, key);
+                } else if (cipherType === 'vigenere') {
+                    encryptedText = vigenereEncrypt(text, key);
+                } else if (cipherType === 'railfence') {
+                    encryptedText = railFenceEncrypt(text, key);
+                }
+                
+                resultOutput.value = encryptedText;
+                copyBtn.classList.remove('opacity-0');
+                showStatus('Encryption successful!', 'success');
+            } catch (error) {
+                console.error("Encryption failed:", error);
+                showStatus('Encryption failed. Check your inputs.', 'error');
+            }
+        };
+
+        const handleDecrypt = () => {
+            const cipherType = cipherSelect.value;
+            const text = textInput.value.trim();
+            let key = '';
+
+            if (cipherType === 'aes' || cipherType === 'vigenere') {
+                key = keyInput.value.trim();
+            } else if (cipherType === 'caesar' || cipherType === 'railfence') {
+                key = parseInt(numericKeyInput.value, 10);
+            }
+
+            if (!text || (isNaN(key) && key === '')) {
+                showStatus('Please enter both text and a key.', 'error');
+                return;
+            }
+
+            try {
+                let decryptedText;
+                if (cipherType === 'aes') {
+                    const bytes = CryptoJS.AES.decrypt(text, key);
+                    decryptedText = bytes.toString(CryptoJS.enc.Utf8);
+                    if (!decryptedText) throw new Error("Invalid key or text.");
+                } else if (cipherType === 'caesar') {
+                    decryptedText = caesarDecrypt(text, key);
+                } else if (cipherType === 'vigenere') {
+                    decryptedText = vigenereDecrypt(text, key);
+                } else if (cipherType === 'railfence') {
+                    decryptedText = railFenceDecrypt(text, key);
+                }
+                
+                resultOutput.value = decryptedText;
+                copyBtn.classList.remove('opacity-0');
+                showStatus('Decryption successful!', 'success');
+            } catch (error) {
+                console.error("Decryption failed:", error);
+                showStatus('Decryption failed. The key may be incorrect or the text is not valid for this cipher.', 'error');
+            }
+        };
+        
+        // --- UI Logic and Event Listeners ---
+
+        const updateKeyInput = () => {
+            const selectedCipher = cipherSelect.value;
+            const isNumeric = selectedCipher === 'caesar' || selectedCipher === 'railfence';
+            const isPassword = selectedCipher === 'aes';
+
+            keyInput.classList.toggle('hidden', isNumeric);
+            numericKeyInput.classList.toggle('hidden', !isNumeric);
+            toggleKeyVisibilityBtn.classList.toggle('hidden', !isPassword);
+
+            if (isNumeric) {
+                keyLabel.textContent = selectedCipher === 'caesar' ? 'Shift Key:' : 'Number of Rails:';
+                numericKeyInput.placeholder = selectedCipher === 'caesar' ? 'Enter a number (1-25)...' : 'Enter a number (2+)...';
+            } else {
+                keyLabel.textContent = selectedCipher === 'aes' ? 'Secret Key:' : 'Keyword:';
+                keyInput.placeholder = selectedCipher === 'aes' ? 'Enter a strong secret key...' : 'Enter a keyword...';
+                keyInput.type = isPassword ? 'password' : 'text';
+            }
+        };
+
+        cipherSelect.addEventListener('change', updateKeyInput);
+        encryptBtn.addEventListener('click', handleEncrypt);
+        decryptBtn.addEventListener('click', handleDecrypt);
+        copyBtn.addEventListener('click', copyToClipboard);
+        toggleKeyVisibilityBtn.addEventListener('click', toggleKeyVisibility);
+        resultOutput.addEventListener('focus', () => { if (resultOutput.value) copyBtn.classList.add('opacity-100'); });
+        resultOutput.addEventListener('blur', () => copyBtn.classList.remove('opacity-100'));
+
+        // Initial setup
+        updateKeyInput();
+    </script>
+</body>
+</html>
