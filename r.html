@@ -142,18 +142,23 @@
             toggleKeyVisibilityBtn.querySelector('svg').classList.toggle('text-emerald-400');
         };
 
-        // --- Cipher Logic ---
+        // --- Cipher Logic (Updated) ---
 
-        const normalizeText = (text) => text.toUpperCase().replace(/[^A-Z]/g, '');
+        // Helper function to check if a character is an alphabet
+        const isLetter = (char) => (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z');
 
         const caesarEncrypt = (text, shift) => {
             let result = '';
             for (let i = 0; i < text.length; i++) {
-                const charCode = text.charCodeAt(i);
-                if (charCode >= 65 && charCode <= 90) { // A-Z
-                    result += String.fromCharCode(((charCode - 65 + shift) % 26) + 65);
+                const char = text[i];
+                if (isLetter(char)) {
+                    const isUpperCase = char === char.toUpperCase();
+                    const startCode = isUpperCase ? 65 : 97;
+                    const charCode = char.charCodeAt(0);
+                    const shiftedCode = ((charCode - startCode + shift) % 26);
+                    result += String.fromCharCode(shiftedCode + startCode);
                 } else {
-                    result += text[i];
+                    result += char;
                 }
             }
             return result;
@@ -162,49 +167,59 @@
         const caesarDecrypt = (text, shift) => {
             let result = '';
             for (let i = 0; i < text.length; i++) {
-                const charCode = text.charCodeAt(i);
-                if (charCode >= 65 && charCode <= 90) { // A-Z
-                    result += String.fromCharCode(((charCode - 65 - shift + 26) % 26) + 65);
+                const char = text[i];
+                if (isLetter(char)) {
+                    const isUpperCase = char === char.toUpperCase();
+                    const startCode = isUpperCase ? 65 : 97;
+                    const charCode = char.charCodeAt(0);
+                    const shiftedCode = ((charCode - startCode - shift + 26) % 26);
+                    result += String.fromCharCode(shiftedCode + startCode);
                 } else {
-                    result += text[i];
+                    result += char;
                 }
             }
             return result;
         };
 
         const vigenereEncrypt = (text, key) => {
-            const normalizedText = normalizeText(text);
-            const normalizedKey = normalizeText(key);
+            const normalizedKey = key.toUpperCase().replace(/[^A-Z]/g, '');
             if (!normalizedKey) return text;
             let result = '';
             let keyIndex = 0;
-            for (let i = 0; i < normalizedText.length; i++) {
-                const charCode = normalizedText.charCodeAt(i);
-                if (charCode >= 65 && charCode <= 90) {
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (isLetter(char)) {
+                    const isUpperCase = char === char.toUpperCase();
+                    const startCode = isUpperCase ? 65 : 97;
+                    const charCode = char.charCodeAt(0);
                     const shift = normalizedKey.charCodeAt(keyIndex % normalizedKey.length) - 65;
-                    result += String.fromCharCode(((charCode - 65 + shift) % 26) + 65);
+                    const shiftedCode = ((charCode - startCode + shift) % 26);
+                    result += String.fromCharCode(shiftedCode + startCode);
                     keyIndex++;
                 } else {
-                    result += normalizedText[i];
+                    result += char;
                 }
             }
             return result;
         };
 
         const vigenereDecrypt = (text, key) => {
-            const normalizedText = normalizeText(text);
-            const normalizedKey = normalizeText(key);
+            const normalizedKey = key.toUpperCase().replace(/[^A-Z]/g, '');
             if (!normalizedKey) return text;
             let result = '';
             let keyIndex = 0;
-            for (let i = 0; i < normalizedText.length; i++) {
-                const charCode = normalizedText.charCodeAt(i);
-                if (charCode >= 65 && charCode <= 90) {
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (isLetter(char)) {
+                    const isUpperCase = char === char.toUpperCase();
+                    const startCode = isUpperCase ? 65 : 97;
+                    const charCode = char.charCodeAt(0);
                     const shift = normalizedKey.charCodeAt(keyIndex % normalizedKey.length) - 65;
-                    result += String.fromCharCode(((charCode - 65 - shift + 26) % 26) + 65);
+                    const shiftedCode = ((charCode - startCode - shift + 26) % 26);
+                    result += String.fromCharCode(shiftedCode + startCode);
                     keyIndex++;
                 } else {
-                    result += normalizedText[i];
+                    result += char;
                 }
             }
             return result;
@@ -252,7 +267,7 @@
 
         const handleEncrypt = () => {
             const cipherType = cipherSelect.value;
-            const text = textInput.value.trim();
+            const text = textInput.value;
             let key = '';
             
             if (cipherType === 'aes' || cipherType === 'vigenere') {
@@ -261,8 +276,8 @@
                 key = parseInt(numericKeyInput.value, 10);
             }
 
-            if (!text || (isNaN(key) && key === '')) {
-                showStatus('Please enter both text and a key.', 'error');
+            if (!text || (cipherType !== 'railfence' && isNaN(key) && key === '') || (cipherType === 'railfence' && (isNaN(key) || key < 2))) {
+                showStatus('Please enter valid text and a key.', 'error');
                 return;
             }
             
@@ -289,7 +304,7 @@
 
         const handleDecrypt = () => {
             const cipherType = cipherSelect.value;
-            const text = textInput.value.trim();
+            const text = textInput.value;
             let key = '';
 
             if (cipherType === 'aes' || cipherType === 'vigenere') {
@@ -298,8 +313,8 @@
                 key = parseInt(numericKeyInput.value, 10);
             }
 
-            if (!text || (isNaN(key) && key === '')) {
-                showStatus('Please enter both text and a key.', 'error');
+            if (!text || (cipherType !== 'railfence' && isNaN(key) && key === '') || (cipherType === 'railfence' && (isNaN(key) || key < 2))) {
+                showStatus('Please enter valid text and a key.', 'error');
                 return;
             }
 
@@ -339,7 +354,7 @@
 
             if (isNumeric) {
                 keyLabel.textContent = selectedCipher === 'caesar' ? 'Shift Key:' : 'Number of Rails:';
-                numericKeyInput.placeholder = selectedCipher === 'caesar' ? 'Enter a number (1-25)...' : 'Enter a number (2+)...';
+                numericKeyInput.placeholder = selectedCipher === 'caesar' ? 'Enter a number (0-25)...' : 'Enter a number (2+)...';
             } else {
                 keyLabel.textContent = selectedCipher === 'aes' ? 'Secret Key:' : 'Keyword:';
                 keyInput.placeholder = selectedCipher === 'aes' ? 'Enter a strong secret key...' : 'Enter a keyword...';
